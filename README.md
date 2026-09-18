@@ -158,3 +158,10 @@ curl "http://127.0.0.1:8000/api/search?q=开心&top_k=10" | python3 -m json.tool
 **无关查询为什么返回空结果**（而非 10 条噪声）：三道相关性防线共同保证 —— BM25 只保留正分命中；文档频率超过 `EMOJI_BM25_MAX_DF_RATIO`（默认 0.5）的无区分度查询词被剪枝；稠密相似度低于 `EMOJI_DENSE_MIN_SCORE`（默认 0.30）的候选被剔除。实测本数据集相关查询 top 得分约 0.40~0.55、无关查询约 0.20~0.36，0.30 为保守下限；若你的查询偏短导致误杀，可调低该值（会被 manifest 记录并触发重建）。
 
 **想调双路权重**：设置 `EMOJI_RRF_W_DENSE` / `EMOJI_RRF_W_SPARSE` 后重建索引（权重参与索引 manifest 的陈旧判定，会自动重建）。
+
+## 数据来源与许可
+
+`public/emoji_*.json` 为衍生数据：名称（name）与关键词（keywords）来自 [Unicode CLDR](https://cldr.unicode.org/) 中文注解，条目范围由 [Unicode Emoji 序列数据](https://www.unicode.org/reports/tr51/)（RGI 白名单）确定，描述（description）由 LLM 生成。CLDR 与 Unicode 数据文件均采用 [Unicode License V3](https://www.unicode.org/license.txt)（宽松许可）：再分发或以其衍生形式发布时，需保留声明「Copyright © Unicode, Inc.，依 Unicode License V3 提供」（随数据副本或关联文档提供均可）。
+
+- BAAI/bge-base-zh-v1.5 模型为 MIT 许可，首次构建索引时由使用者自行下载，不随本仓库分发
+- 「Unicode」字标与徽标为 Unicode, Inc. 商标；本项目与其无隶属关系，不使用其徽标或暗示任何形式的背书
