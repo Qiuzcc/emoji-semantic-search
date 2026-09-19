@@ -31,8 +31,9 @@ RUN python -m venv /opt/venv \
     && /opt/venv/bin/pip install --no-cache-dir -r requirements.txt
 
 # 应用代码与数据（scripts/ 为数据构造工具，不参与服务运行）
+# 注意：web/ 不在此阶段复制——它作为独立层放在运行阶段末尾，
+# 这样只改 UI 时不会使 build-index 层缓存失效（构建从 ~10 分钟降到秒级）
 COPY app/ app/
-COPY web/ web/
 COPY public/ public/
 
 # 下载 bge 模型到 /app/models 并构建索引到 /app/index
@@ -55,6 +56,9 @@ WORKDIR /app
 
 COPY --from=builder /opt/venv /opt/venv
 COPY --from=builder /app /app
+
+# UI 独立层（放最后）：只改 web/ 时仅重建此层，不触发构建阶段的 build-index
+COPY web/ web/
 
 EXPOSE 8000
 
