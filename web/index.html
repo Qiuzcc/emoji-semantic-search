@@ -3,22 +3,13 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Emoji 语义搜索 · 稠密 + 稀疏双路召回</title>
+  <title>Emoji 语义搜索</title>
   <link rel="icon" href="/favicon.ico" />
   <link rel="stylesheet" href="./style.css" />
 </head>
 <body>
   <header class="hero">
-    <div class="hero__inner">
-      <h1 class="hero__title">Emoji 语义搜索</h1>
-      <p class="hero__sub">
-        稠密 <code>BAAI/bge-base-zh-v1.5</code> + <code>FAISS</code> ·
-        稀疏 <code>rank_bm25</code> · <strong>RRF</strong> 融合排序 · 结果上限 10
-      </p>
-    </div>
-    <div class="hero__status" id="status" aria-live="polite">
-      <span class="dot dot--pending"></span><span id="status-text">正在检查索引状态…</span>
-    </div>
+    <h1 class="hero__title">Emoji 语义搜索</h1>
   </header>
 
   <main class="main">
@@ -32,34 +23,15 @@
         aria-label="搜索 emoji"
       />
       <button class="btn btn--primary" id="submit" type="submit">搜索</button>
-      <button class="btn btn--ghost" id="clear" type="button">清空</button>
     </form>
 
     <div class="examples" id="examples" aria-label="示例查询"></div>
-
-    <div class="controls">
-      <label class="field">
-        <span class="field__label">结果数量</span>
-        <select id="top-k" class="select"></select>
-      </label>
-      <div class="field">
-        <span class="field__label">召回模式</span>
-        <div class="segmented" id="mode" role="group" aria-label="召回模式">
-          <button type="button" class="segmented__item is-active" data-mode="fusion">RRF 融合</button>
-          <button type="button" class="segmented__item" data-mode="dense">仅稠密</button>
-          <button type="button" class="segmented__item" data-mode="sparse">仅稀疏</button>
-        </div>
-      </div>
-    </div>
 
     <p class="meta" id="meta" aria-live="polite"></p>
     <section class="grid" id="results"></section>
   </main>
 
   <footer class="footer">
-    <p>
-      检索链路：查询 →（稠密 FAISS 归一化内积召回 top-N）+（BM25 稀疏召回 top-N）→ RRF 融合 → 展示前 10 条
-    </p>
     <p class="footer__hint">
       提示：点击 emoji 可复制；<kbd>Enter</kbd> 搜索，<kbd>Esc</kbd> 清空
     </p>
