@@ -118,6 +118,17 @@ curl "http://127.0.0.1:8000/api/search?q=开心&top_k=10" | python3 -m json.tool
 }
 ```
 
+## 部署到服务器
+
+项目已容器化（多阶段构建：构建期下载模型并预建索引，运行期零外网依赖），可部署到任意满足「Docker + 内存 ≥2GB」的 Linux 服务器：
+
+```bash
+docker compose up -d --build     # 构建镜像并启动
+# 浏览器访问 http://<服务器IP>:8000（需放行安全组 TCP 8000）
+```
+
+首次部署、日常更新流程（改 UI 约 1.5 分钟 / 改逻辑或数据约 10 分钟）、运维与回滚详见 [DEPLOY.md](DEPLOY.md)。
+
 ## 索引与数据更新
 
 - 索引落在 `index/`：`emoji.faiss`（FAISS）、`embeddings.npy`（向量）、`corpus_tokens.json`（BM25 语料 token）、`entries.json`（条目快照）、`manifest.json`（元信息）
