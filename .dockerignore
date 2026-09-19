@@ -1,0 +1,16 @@
+# 构建上下文排除项（容器内的模型/索引由构建阶段自行生成）
+.git/
+.gitignore
+.venv/
+models/
+index/
+scripts/
+tests/
+__pycache__/
+**/__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+verify_*.png
+.DS_Store
+README.md

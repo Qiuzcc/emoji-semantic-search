@@ -1,0 +1,12 @@
+services:
+  emoji-search:
+    build: .
+    image: emoji-semantic-search:1.0
+    container_name: emoji-search
+    restart: unless-stopped
+    ports:
+      # 访问地址 http://<ECS公网IP>:8000（安全组放行 8000）；
+      # 如想不带端口号访问，可改为 "80:8000" 并在安全组放行 80
+      - "8000:8000"
+    environment:
+      - EMOJI_EMBED_DEVICE=cpu
