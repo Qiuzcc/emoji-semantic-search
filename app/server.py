@@ -6,11 +6,13 @@
 接口：
     GET /api/health                                服务与索引状态
     GET /api/search?q=&top_k=10&mode=fusion        双路召回 + RRF 融合检索
+    GET /analytics.js                              前端统计脚本（百度统计，未配置站点 ID 时禁用）
     GET /                                           GUI 页面（web/ 静态资源）
 """
 from __future__ import annotations
 
 import logging
+import re
 from contextlib import asynccontextmanager
 from pathlib import Path
 from typing import AsyncIterator
@@ -32,9 +34,33 @@ _FAVICON = (
     '<text x="32" y="44" font-size="34" text-anchor="middle">&#128269;</text></svg>'
 )
 
+# 百度统计站点 ID（hm.js? 后的 16~64 位十六进制）；未配置或非法时前端不加载统计脚本
+_ANALYTICS_ID_RE = re.compile(r"[0-9a-fA-F]{16,64}")
+
+
+def analytics_script(site_id: str) -> str:
+    """生成 /analytics.js 内容：站点 ID 合法时注入百度统计，否则下发禁用开关。"""
+    if not _ANALYTICS_ID_RE.fullmatch(site_id or ""):
+        return "window.__ANALYTICS__ = { enabled: false };\n"
+    return (
+        "window.__ANALYTICS__ = { enabled: true };\n"
+        "(function () {\n"
+        "  var _hmt = (window._hmt = window._hmt || []);\n"
+        "  var hm = document.createElement('script');\n"
+        f"  hm.src = 'https://hm.baidu.com/hm.js?{site_id}';\n"
+        "  hm.async = true;\n"
+        "  (document.head || document.getElementsByTagName('head')[0]).appendChild(hm);\n"
+        "})();\n"
+    )
+
 
 def create_app(auto_build: bool = True, warmup: bool = True) -> FastAPI:
     engine = SearchEngine()
+
+    if config.BAIDU_ANALYTICS_ID and not _ANALYTICS_ID_RE.fullmatch(config.BAIDU_ANALYTICS_ID):
+        logger.warning(
+            "EMOJI_BAIDU_ANALYTICS_ID 格式不合法（应为 16~64 位十六进制），前端统计已禁用"
+        )
 
     @asynccontextmanager
     async def lifespan(app: FastAPI) -> AsyncIterator[None]:
@@ -67,6 +93,14 @@ def create_app(auto_build: bool = True, warmup: bool = True) -> FastAPI:
     @app.get("/favicon.ico", include_in_schema=False)
     def favicon() -> Response:
         return Response(content=_FAVICON, media_type="image/svg+xml")
+
+    @app.get("/analytics.js", include_in_schema=False)
+    def analytics() -> Response:
+        return Response(
+            content=analytics_script(config.BAIDU_ANALYTICS_ID),
+            media_type="application/javascript; charset=utf-8",
+            headers={"Cache-Control": "no-cache"},
+        )
 
     @app.get("/api/health", summary="服务与索引状态")
     def health() -> JSONResponse:

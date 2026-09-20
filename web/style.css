@@ -241,6 +241,29 @@ code, kbd { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospac
 }
 
 .footer p { margin: 4px 0; }
+
+.footer__star { font-size: 13px; }
+
+.github-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  margin: 0 2px;
+  padding: 2px 10px;
+  font-weight: 600;
+  color: var(--text);
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  text-decoration: none;
+  vertical-align: middle;
+  transition: color 0.15s ease, border-color 0.15s ease, background 0.15s ease;
+}
+
+.github-link:hover { color: var(--accent); border-color: var(--accent); background: var(--accent-soft); }
+
+.github-link__icon { flex: none; }
+
 .footer__hint kbd {
   background: var(--bg-elevated);
   border: 1px solid var(--border);

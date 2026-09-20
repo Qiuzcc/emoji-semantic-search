@@ -75,6 +75,10 @@ CORPUS_TOKENS_FILE = "corpus_tokens.json"
 ENTRIES_FILE = "entries.json"
 MANIFEST_FILE = "manifest.json"
 
+# ---------------------------------------------------------------- 前端统计
+# 百度统计站点 ID（hm.js? 后的 32 位标识）；留空表示前端不加载统计脚本
+BAIDU_ANALYTICS_ID = _env_str("EMOJI_BAIDU_ANALYTICS_ID", "")
+
 
 def clamp_top_k(top_k: int | None) -> int:
     """结果条数钳制：至少 1 条，最多 MAX_RESULTS（10）条。"""

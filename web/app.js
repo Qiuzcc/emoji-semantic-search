@@ -16,11 +16,22 @@ const dom = {
   meta: document.getElementById("meta"),
   results: document.getElementById("results"),
   toast: document.getElementById("toast"),
+  githubLink: document.getElementById("github-link"),
 };
 
 const state = { query: "", loading: false };
 
 // ------------------------------------------------------------------ 工具
+/**
+ * 埋点：统计脚本由 /analytics.js 按服务端配置注入；未接入时 window._hmt 不存在，
+ * 事件静默丢弃（本地开发与未配置统计的部署均无副作用）。
+ */
+function trackEvent(category, action, label = "") {
+  const hmt = window._hmt;
+  if (!hmt || typeof hmt.push !== "function") return;
+  hmt.push(["_trackEvent", category, action, String(label).slice(0, 80)]);
+}
+
 async function fetchJSON(url) {
   const response = await fetch(url, { headers: { Accept: "application/json" } });
   const raw = await response.text();
@@ -53,8 +64,10 @@ async function copyText(text, message) {
       helper.remove();
     }
     toast(message);
+    return true;
   } catch {
     toast("复制失败，请手动选择复制");
+    return false;
   }
 }
 
@@ -114,12 +127,16 @@ function createCard(item) {
   const head = document.createElement("div");
   head.className = "card__head";
 
+  const copyEmoji = async () => {
+    if (await copyText(item.cp, `已复制 ${item.cp}`)) trackEvent("copy", "emoji", item.name);
+  };
+
   const emoji = document.createElement("button");
   emoji.type = "button";
   emoji.className = "card__emoji";
   emoji.textContent = item.cp || "?";
   emoji.title = "点击复制 emoji";
-  emoji.addEventListener("click", () => copyText(item.cp, `已复制 ${item.cp}`));
+  emoji.addEventListener("click", copyEmoji);
 
   const title = document.createElement("div");
   title.className = "card__title";
@@ -149,8 +166,12 @@ function createCard(item) {
   const actions = document.createElement("div");
   actions.className = "card__actions";
   actions.append(
-    actionButton("复制 Emoji", () => copyText(item.cp, `已复制 ${item.cp}`)),
-    actionButton("复制 Emoji + 名称", () => copyText(`${item.cp} ${item.name}`.trim(), "已复制 emoji 与名称")),
+    actionButton("复制 Emoji", copyEmoji),
+    actionButton("复制 Emoji + 名称", async () => {
+      if (await copyText(`${item.cp} ${item.name}`.trim(), "已复制 emoji 与名称")) {
+        trackEvent("copy", "emoji-name", item.name);
+      }
+    }),
   );
 
   card.append(head);
@@ -173,7 +194,7 @@ function renderResults(data) {
 }
 
 // ------------------------------------------------------------------ 检索
-async function runSearch(rawQuery) {
+async function runSearch(rawQuery, source = "submit") {
   const text = String(rawQuery ?? dom.input.value).trim();
   if (!text) {
     dom.input.focus();
@@ -182,6 +203,7 @@ async function runSearch(rawQuery) {
   }
   state.query = text;
   dom.input.value = text;
+  trackEvent("search", source, text); // source：submit（主动搜索）| example（点击示例）
   setLoading(true);
   renderSkeleton();
   setMeta("检索中…");
@@ -189,8 +211,10 @@ async function runSearch(rawQuery) {
   try {
     const url = `/api/search?q=${encodeURIComponent(text)}&top_k=${MAX_RESULTS}&mode=fusion`;
     const data = await fetchJSON(url);
+    if ((data.results || []).length === 0) trackEvent("search", "no-result", text);
     renderResults(data);
   } catch {
+    trackEvent("search", "error", text);
     renderEmpty("检索失败，请稍后重试。");
     setMeta("检索失败，请稍后重试。", true);
   } finally {
@@ -210,7 +234,7 @@ function initExamples() {
     chip.type = "button";
     chip.className = "chip";
     chip.textContent = text;
-    chip.addEventListener("click", () => runSearch(text));
+    chip.addEventListener("click", () => runSearch(text, "example"));
     dom.examples.append(chip);
   });
 }
@@ -220,6 +244,8 @@ function bindEvents() {
     event.preventDefault();
     if (!state.loading) runSearch();
   });
+
+  dom.githubLink.addEventListener("click", () => trackEvent("engage", "github-star"));
 
   dom.input.addEventListener("keydown", (event) => {
     if (event.key === "Escape") {

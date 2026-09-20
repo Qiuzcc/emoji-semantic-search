@@ -19,5 +19,8 @@ __pycache__/
 *.egg-info/
 .pytest_cache/
 
+# 环境变量文件（本地/服务器侧配置，如百度统计站点 ID）
+.env
+
 # 系统
 .DS_Store

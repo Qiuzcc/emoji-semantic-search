@@ -106,6 +106,25 @@ ssh -i <密钥> <user>@<服务器IP> "cd /opt/emoji-semantic-search && docker co
 
 pip 层与 build-index 层均重跑。
 
+## 前端统计（可选）
+
+UI 已接入百度统计（PV/UV 及检索、复制、GitHub 点击等交互事件）。站点 ID 通过环境变量注入，未配置时前端不加载任何统计脚本。
+
+1. 在[百度统计](https://tongji.baidu.com)添加站点，从「代码获取」取得 `hm.js?` 后的站点 ID（32 位十六进制）；
+2. 在服务器项目目录创建 `.env`（docker compose 自动读取；该文件不入库、不随部署覆盖）：
+
+   ```bash
+   ssh <user>@<服务器IP> "echo 'EMOJI_BAIDU_ANALYTICS_ID=<站点ID>' >> /opt/emoji-semantic-search/.env"
+   ```
+
+3. 重启容器生效（`docker compose up -d`），在服务器上验证：
+
+   ```bash
+   curl -s http://127.0.0.1:8000/analytics.js   # 应输出 enabled: true 并引用 hm.js?<站点ID>
+   ```
+
+数据在百度统计后台「访问分析」与「事件分析」查看（事件分类：`search` / `copy` / `engage`）。
+
 ## 运维
 
 ```bash

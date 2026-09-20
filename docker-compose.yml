@@ -10,3 +10,5 @@ services:
       - "8000:8000"
     environment:
       - EMOJI_EMBED_DEVICE=cpu
+      # 百度统计站点 ID（可选）：在项目目录 .env 中配置，留空则不加载统计脚本
+      - EMOJI_BAIDU_ANALYTICS_ID=${EMOJI_BAIDU_ANALYTICS_ID:-}
