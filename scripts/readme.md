@@ -2,6 +2,8 @@
 
 本目录脚本用于构造 emoji 语义搜索的**初始数据**：从 CLDR 中文注解与 Unicode RGI 白名单抽取、清洗 emoji 条目，再调用 LLM 为每条生成中文语义描述，输出 `public/emoji_*.json` 供检索服务建索引使用。
 
+另含一键部署脚本 `deploy.sh`（本地 → ECS：同步、按变更智能重建、健康检查），用法见上级 [DEPLOY.md](../DEPLOY.md)。
+
 ## 脚本与运行环境
 
 | 脚本 | 运行时要求 | 依赖 |

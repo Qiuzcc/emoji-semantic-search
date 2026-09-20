@@ -60,6 +60,25 @@ docker compose up -d --build
 
 通用四步：本地修改验证 → 同步到服务器 → 重建重启 → 验证 `http://<服务器IP>:8000/api/health`。
 
+### 一键部署（推荐）
+
+本地执行 `scripts/deploy.sh` 自动完成上述四步，并按变更内容自动选择构建路径：
+
+```bash
+scripts/deploy.sh            # 自动检测变更并部署
+scripts/deploy.sh --force    # 无变更时也强制重建
+scripts/deploy.sh --dry-run  # 只预览将要执行的操作
+scripts/deploy.sh --status   # 查看服务器、容器与服务状态
+```
+
+| 变更内容 | 构建路径 | 服务影响 |
+| --- | --- | --- |
+| `app/` `public/` `requirements.txt` `Dockerfile` 等 | 完整重建（先停容器） | 构建期间不可用（约 10~15 分钟，首次更久） |
+| `web/` `docker-compose.yml` | 增量重建（在线构建） | 基本不中断（约 1~2 分钟） |
+| README / 测试 / 脚本等其他文件 | 仅同步，跳过重建 | 无 |
+
+脚本通过本机 `~/.ssh/config` 中的 SSH 别名连接服务器（默认 `aliyun`，可用环境变量 `SSH_HOST` 指向自己的别名，`REMOTE_DIR` / `SERVICE_URL` 亦可覆盖），部署后自动等待健康检查通过；未设置 `SERVICE_URL` 时经 SSH 在服务器本地检查 `127.0.0.1:8000/api/health`。
+
 > **低内存实例（≤2GB）注意**：构建进程（编码内存峰值约 1GB）与运行中的旧容器（常驻约 950MB）会同时占用内存，物理内存不足时触发 swap 抖动，可导致实例短暂假死（SSH/服务均无响应）。建议**先停容器再构建**：
 >
 > ```bash
@@ -67,6 +86,8 @@ docker compose up -d --build
 > ```
 >
 > 代价是构建期间服务不可用（2 核经济型实例约 10 分钟）。若构建中途实例无响应，等待构建跑完（内存释放后自动恢复）或在云控制台重启实例。
+
+以下为手工步骤（脚本不可用时参考）：
 
 ### 改 UI（`web/`）——约 1.5 分钟
 
@@ -95,6 +116,16 @@ docker compose up -d --build    # 重建并替换
 ```
 
 服务已配置开机自启（Docker 服务 + `restart: unless-stopped`），服务器重启后自动恢复。
+
+## Nginx 反向代理（80 → 8000）
+
+服务器已安装 Nginx 并将 80 端口请求反向代理到本服务（`127.0.0.1:8000`），配置文件 `/etc/nginx/conf.d/emoji-search.conf`：
+
+- 访问方式：`http://<服务器IP>/`（等效于 `http://<服务器IP>:8000`）
+- 相关命令：`nginx -t` 校验配置、`systemctl restart nginx` 重启、`tail -f /var/log/nginx/access.log` 查看访问日志
+- 已启用开机自启（`systemctl enable nginx`）
+
+> 443 HTTPS 尚未配置。后续如需启用：准备证书（自签名或域名 + Let's Encrypt）后，在 `conf.d/emoji-search.conf` 中新增 443 server 块并放行安全组。
 
 ## 回滚
 

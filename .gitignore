@@ -10,6 +10,9 @@ models/
 # 数据脚本缓存（数据源 + LLM 描述缓存，重跑脚本可自动再生）
 scripts/.cache/
 
+# GIF 演示帧（本地生成，用于重出 assets/preview.gif）
+.preview-frames/
+
 # Python
 __pycache__/
 *.py[cod]
